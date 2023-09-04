@@ -4,20 +4,22 @@ from subprocess import check_output as cop
 #Vendor ID: i[23:27]
 #Name: i[33:]
 
-class Classical_linux(object):
-    def __init__(self, perm_lvl):
+class Udev(object):
+    def __init__(self, perm_lvl, distro):
         self.perm_lvl = perm_lvl
         self.usb_devices = []
         self.idVendor = "idVendor" #will make sense later
-        self.saving_path = input("\nudev rule location:\n")
         self.search()
         self.select()
-        self.save()
+        if distro == 1:
+            self.save_nix()
+        elif distro == 2:
+            self.save_classic()
 
     def search(self):
-        query = input("\nEnter manufactor name (type CC for CharaChorder): ")
-        if query == 'CC':
-            query = 'CharaChorder'
+        query = input("\nEnter manufactor name (type CC for CharaChorder)\nLeave blank to display all devices: ")
+        if query == 'CC' or query == 'cc':
+            query = "CharaChorder"
         output = str(cop(f"lsusb | grep '{query}'", shell=True)).replace("b'", "").replace("\\n", "\n")
         self.usb_devices = output.split("\n")
 
@@ -27,8 +29,8 @@ class Classical_linux(object):
             print(f'{ind}: {i[33:]}')
         self.device = self.usb_devices[int(input("\nSelect device: "))]
 
-    def save(self):
-        save_path = f'{self.saving_path}/60-{self.device[33:].replace(" ", "_")}.rule'
+    def save_classic(self):
+        save_path = f'/etc/udev/rules.d/60-{self.device[33:].replace(" ", "_")}.rule'
         udev_rule = f'SUBSYSTEM=="usb", ATTR{self.idVendor}=="[{self.device[23:27]}]", MODE="{self.perm_lvl}", GROUP="plugdev"'
 
         print(f'\nshould the following be written to {save_path} (y/n)? \n "{udev_rule}"')
@@ -41,10 +43,9 @@ class Classical_linux(object):
         elif temp == 'n' or temp == 'N':
             print("Okay, no changes made")
 
-class Nix_os(object):
-    def __init__(self, perm_lvl):
-        self.perm_lvl = perm_lvl
-        print("nixOS, not implemented yet, check back later!")
+    def save_nix(self):
+        os.system(f"echo ")
+
 
 def main():
     os.system("clear")
@@ -65,12 +66,7 @@ def main():
         perm_lvl = "0664"
     elif perm_lvl == 2:
         perm_lvl = "0666"
-    
+    Udev(perm_lvl, distro)
 
-    if distro == 1:
-        Nix_os(perm_lvl)
-    elif distro == 2:
-        Classical_linux(perm_lvl)
-        
 if __name__ == "__main__":
     main()
